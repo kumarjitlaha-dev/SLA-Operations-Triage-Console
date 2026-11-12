@@ -1,0 +1,8 @@
+{
+  "name": "DMAIC Ops Triage Console: Claims SLA Stabilization",
+  "description": "A sleek corporate operations triage dashboard for scoping DMAIC deliverables, defining CTQs, and evaluating SLA impact.",
+  "version": "1.0.0",
+  "type": "ungraded-item",
+  "entryPoint": "index.html",
+  "author": "Process Excellence Curriculum"
+}

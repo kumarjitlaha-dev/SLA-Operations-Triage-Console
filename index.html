@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operations Triage Console — DMAIC Process Analysis</title>
+  <script src="https://www.coursera.org/widget/coursera-widget-connect-v0.js"></script>
+  <style>
+    :root {
+      --navy: #0f172a;
+      --slate: #1e293b;
+      --blue: #0056d2;
+      --blue-soft: #eff6ff;
+      --teal: #0d9488;
+      --amber: #d97706;
+      --red: #dc2626;
+      --green: #16a34a;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
+
+    .workspace {
+      width: 100%;
+      max-width: 1040px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+
+    /* Corporate Header Bar */
+    .topbar {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-dot { width: 10px; height: 10px; border-radius: 50%; background: #38bdf8; }
+    .brand h1 { font-size: 0.98rem; font-weight: 600; letter-spacing: 0.02em; }
+    .brand span { font-size: 0.76rem; color: #94a3b8; display: block; }
+
+    .hud-group { display: flex; gap: 10px; }
+    .hud-chip {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #e2e8f0;
+    }
+    .hud-chip strong { color: #38bdf8; font-variant-numeric: tabular-nums; }
+
+    /* Live Operational KPI Strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+    }
+    @media (max-width: 720px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+    .kpi-card {
+      padding: 14px 18px;
+      border-right: 1px solid var(--border);
+    }
+    .kpi-card:last-child { border-right: none; }
+    .kpi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; }
+    .kpi-val { font-size: 1.35rem; font-weight: 700; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+    .kpi-sub { font-size: 0.75rem; color: var(--muted); }
+    .status-red { color: var(--red); }
+    .status-green { color: var(--green); }
+    .status-blue { color: var(--blue); }
+
+    /* Main Split Layout */
+    .grid-body {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 0;
+    }
+    @media (max-width: 820px) { .grid-body { grid-template-columns: 1fr; } }
+
+    .pane { padding: 20px 22px; }
+    .pane-left { border-right: 1px solid var(--border); background: #ffffff; }
+    .pane-right { background: #fafbfc; }
+
+    .sec-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--slate);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .context-card {
+      background: var(--blue-soft);
+      border-left: 3px solid var(--blue);
+      padding: 12px 14px;
+      border-radius: 4px;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    /* Mini Excel Data Grid */
+    .excel-box {
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .excel-bar {
+      background: #107c41;
+      color: #fff;
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    th { background: #f1f5f9; border-bottom: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; color: #334155; }
+    td { border-bottom: 1px solid #e2e8f0; padding: 7px 8px; font-variant-numeric: tabular-nums; }
+    .pill-bad { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 0.72rem; }
+    .pill-ok { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 0.72rem; }
+
+    /* Form Controls */
+    .control-group { margin-bottom: 14px; }
+    .control-group label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 5px; color: var(--slate); }
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.84rem;
+      background: #fff;
+    }
+
+    .decision-card {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      font-size: 0.83rem;
+      line-height: 1.4;
+    }
+    .decision-card:hover { border-color: var(--blue); }
+    .decision-card.active { border-color: var(--blue); background: var(--blue-soft); }
+
+    .action-bar {
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-exec {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-exec:hover { background: #00419e; }
+
+    .audit-banner {
+      display: none;
+      padding: 14px 22px;
+      border-top: 1px solid var(--border);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+    .audit-banner.show { display: block; }
+    .audit-pass { background: #ecfdf5; color: #065f46; }
+    .audit-warn { background: #fffbeb; color: #92400e; }
+  </style>
+</head>
+<body>
+  <div class="workspace" id="app">
+    <!-- Top Corporate Header -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <div>
+          <h1>OPS-PULSE // DMAIC Process Triage Console</h1>
+          <span>Motor Claims Adjudication Unit &bull; West Zone Operations</span>
+        </div>
+      </div>
+      <div class="hud-group">
+        <div class="hud-chip">Session Clock: <strong id="clock">15:00</strong></div>
+        <div class="hud-chip">Audit Score: <strong id="scoreVal">0 / 100</strong></div>
+      </div>
+    </div>
+
+    <!-- Live KPI Strip -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-label">Mean Cycle Time (TAT)</div>
+        <div class="kpi-val status-red" id="kpiTat">6.4 Days</div>
+        <div class="kpi-sub">Target SLA: &le; 4.0 Days</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Baseline Defect Rate</div>
+        <div class="kpi-val status-red" id="kpiDefect">24.0%</div>
+        <div class="kpi-sub">Target: &le; 5.0% Defects</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Quarterly Penalty Risk</div>
+        <div class="kpi-val status-red" id="kpiCost">₹18.5 Lakhs</div>
+        <div class="kpi-sub">SLA & Rework Exposure</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Project Scope Status</div>
+        <div class="kpi-val status-blue" id="kpiScope">Unbounded</div>
+        <div class="kpi-sub">Single-Process Boundary</div>
+      </div>
+    </div>
+
+    <!-- Split Operational Workspace -->
+    <div class="grid-body">
+      <!-- Left Pane: Operational Evidence (Excel & Scenario) -->
+      <div class="pane pane-left">
+        <div class="sec-title">
+          <span>1. Operational Evidence & Baseline Log</span>
+          <span style="font-size:0.74rem; color:#64748b;">n = 400 Claims</span>
+        </div>
+
+        <div class="context-card">
+          <strong>Situation Brief:</strong> Customer escalations spiked this quarter because motor claims exceed the <strong>4.0-day payout SLA</strong>, and 14% of files bounce back from finance due to missing surveyor/KYC fields. Structure a single-process DMAIC intervention using <strong>Excel, Visio, and Planner</strong>.
+        </div>
+
+        <div class="excel-box">
+          <div class="excel-bar">
+            <span>Claims_Baseline_Q3.xlsx — Bottleneck & Defect Summary</span>
+            <span>Excel Extract</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Workflow Stage</th>
+                <th>Avg Time</th>
+                <th>Primary Failure Mode</th>
+                <th>Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1. FNOL Intake</td>
+                <td>0.6 d</td>
+                <td>Incomplete KYC attachments (56 files)</td>
+                <td><span class="pill-bad">14% Rework</span></td>
+              </tr>
+              <tr>
+                <td>2. Assessor Review</td>
+                <td>3.9 d</td>
+                <td>Manual queue assignment & idle handoffs</td>
+                <td><span class="pill-bad">High Delay</span></td>
+              </tr>
+              <tr>
+                <td>3. Payout Release</td>
+                <td>1.9 d</td>
+                <td>Bank NEFT batching (within norm)</td>
+                <td><span class="pill-ok">Stable</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sec-title"><span>2. Artifact & Tool Governance (Apply)</span></div>
+        <div class="control-group">
+          <label>A. Which tool maps the 3-stage claim handoff swimlanes & rework loops?</label>
+          <select id="selVisio" onchange="livePreview()">
+            <option value="">-- Select Artifact Tool --</option>
+            <option value="Visio">Microsoft Visio (Cross-Functional Swimlane Map)</option>
+            <option value="Excel">Microsoft Excel (Pivot Table)</option>
+            <option value="Planner">Microsoft Planner (Kanban Board)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>B. Which tool governs DMAIC phase gate owners & 6-week milestones?</label>
+          <select id="selPlanner" onchange="livePreview()">
+            <option value="">-- Select Artifact Tool --</option>
+            <option value="Excel">Microsoft Excel (Histogram)</option>
+            <option value="Planner">Microsoft Planner (Phase Task & Milestone Schedule)</option>
+            <option value="Visio">Microsoft Visio (Org Chart)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right Pane: CTQ Definition & Executive Decision -->
+      <div class="pane pane-right">
+        <div class="sec-title"><span>3. CTQ & Defect Specification (Analyze)</span></div>
+
+        <div class="control-group">
+          <label>Select Operational Process Boundary:</label>
+          <select id="selBoundary" onchange="livePreview()">
+            <option value="">-- Define Process Start & Stop --</option>
+            <option value="tight">FNOL Digital Submission → Finance Payout Approval (West Zone Motor Claims)</option>
+            <option value="broad">All Insurance Lines Nationwide + Core Underwriting IT Replacement</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Select Measurable CTQ & Defect Rule for Excel Tracker:</label>
+          <select id="selCtq" onchange="livePreview()">
+            <option value="">-- Define Binary Defect Criterion --</option>
+            <option value="exact">Defect = Total TAT &gt; 4.0 Days OR Missing Mandatory KYC Field at Intake</option>
+            <option value="vague">Defect = Any claim where the policyholder leaves a negative survey score</option>
+          </select>
+        </div>
+
+        <div class="sec-title" style="margin-top:16px;"><span>4. Evaluate Intervention Options (Excel ROI)</span></div>
+
+        <div class="decision-card" id="opt-A" onclick="pickPlan('A')">
+          <input type="radio" name="plan" id="rad-A" />
+          <div>
+            <strong>Option A: Mandatory Intake KYC Gate + Auto-Routing in Visio To-Be</strong><br/>
+            <span style="color:#475569;">Cost: ₹1.2L &bull; Cuts TAT to 3.4d &bull; Cuts defects to 3.8% &bull; Saves ₹15.4L/qtr &bull; Low Risk</span>
+          </div>
+        </div>
+
+        <div class="decision-card" id="opt-B" onclick="pickPlan('B')">
+          <input type="radio" name="plan" id="rad-B" />
+          <div>
+            <strong>Option B: Hire 12 Temporary Payout Clerks Without Fixing Intake</strong><br/>
+            <span style="color:#475569;">Cost: ₹9.5L/qtr &bull; Cuts TAT to 5.1d &bull; KYC rework remains 14% &bull; High Recurring Cost</span>
+          </div>
+        </div>
+
+        <div class="decision-card" id="opt-C" onclick="pickPlan('C')">
+          <input type="radio" name="plan" id="rad-C" />
+          <div>
+            <strong>Option C: Full Core Insurance Software Migration Across All Zones</strong><br/>
+            <span style="color:#475569;">Cost: ₹95.0L &bull; 16-month timeline &bull; High operational disruption risk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit Feedback Banner -->
+    <div class="audit-banner" id="auditBanner"></div>
+
+    <!-- Action Footer -->
+    <div class="action-bar">
+      <span style="font-size:0.8rem; color:#475569;">Complete all 5 operational controls to run the Six Sigma Governance Audit.</span>
+      <button class="btn-exec" onclick="runGovernanceAudit()">Run DMAIC Governance Audit</button>
+    </div>
+  </div>
+
+  <script>
+    let selectedPlan = "";
+    let seconds = 15 * 60;
+
+    setInterval(() => {
+      if (seconds > 0) {
+        seconds--;
+        const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+        const s = String(seconds % 60).padStart(2, "0");
+        document.getElementById("clock").textContent = `${m}:${s}`;
+      }
+    }, 1000);
+
+    function pickPlan(code) {
+      selectedPlan = code;
+      ["A", "B", "C"].forEach(c => {
+        document.getElementById("opt-" + c).classList.toggle("active", c === code);
+        document.getElementById("rad-" + c).checked = (c === code);
+      });
+      livePreview();
+    }
+
+    function livePreview() {
+      const boundary = document.getElementById("selBoundary").value;
+      const scopeEl = document.getElementById("kpiScope");
+      if (boundary === "tight") {
+        scopeEl.textContent = "Bounded (West)";
+        scopeEl.className = "kpi-val status-green";
+      } else if (boundary === "broad") {
+        scopeEl.textContent = "Scope Creep";
+        scopeEl.className = "kpi-val status-red";
+      }
+
+      const tatEl = document.getElementById("kpiTat");
+      const defEl = document.getElementById("kpiDefect");
+      const costEl = document.getElementById("kpiCost");
+
+      if (selectedPlan === "A") {
+        tatEl.textContent = "3.4 Days"; tatEl.className = "kpi-val status-green";
+        defEl.textContent = "3.8%"; defEl.className = "kpi-val status-green";
+        costEl.textContent = "₹3.1 Lakhs"; costEl.className = "kpi-val status-green";
+      } else if (selectedPlan === "B") {
+        tatEl.textContent = "5.1 Days"; tatEl.className = "kpi-val status-red";
+        defEl.textContent = "16.5%"; defEl.className = "kpi-val status-red";
+        costEl.textContent = "₹14.2 Lakhs"; costEl.className = "kpi-val status-red";
+      } else if (selectedPlan === "C") {
+        tatEl.textContent = "Unstable"; tatEl.className = "kpi-val status-red";
+        defEl.textContent = "24.0%+"; defEl.className = "kpi-val status-red";
+        costEl.textContent = "₹95.0 Lakhs"; costEl.className = "kpi-val status-red";
+      }
+      resizeFrame();
+    }
+
+    function runGovernanceAudit() {
+      const v = document.getElementById("selVisio").value;
+      const p = document.getElementById("selPlanner").value;
+      const b = document.getElementById("selBoundary").value;
+      const c = document.getElementById("selCtq").value;
+
+      if (!v || !p || !b || !c || !selectedPlan) {
+        showBanner(false, "<strong>Incomplete Configuration:</strong> Please select all tool assignments, process boundary, CTQ defect rule, and an intervention plan before running the audit.");
+        return;
+      }
+
+      let score = 0;
+      if (v === "Visio") score += 15;
+      if (p === "Planner") score += 15;
+      if (b === "tight") score += 20;
+      if (c === "exact") score += 25;
+      if (selectedPlan === "A") score += 25;
+
+      document.getElementById("scoreVal").textContent = `${score} / 100`;
+
+      if (score === 100) {
+        showBanner(true, "<strong>100/100 — Governance Approved:</strong> You properly mapped Visio for swimlanes and Planner for phase milestones, locked a single-process boundary, defined an unambiguous binary CTQ rule (&le;4.0d TAT + 100% intake KYC), and selected Option A—cutting TAT to 3.4 days with ₹15.4L quarterly savings.");
+      } else {
+        showBanner(false, `<strong>Audit Score: ${score}/100.</strong> Review any non-optimal selections: Use <strong>Visio</strong> for swimlanes, <strong>Planner</strong> for phase gates, keep the boundary scoped to <strong>West Zone Motor Claims</strong>, define CTQs with hard numeric thresholds (&le;4.0d + KYC check), and choose <strong>Option A</strong> to eliminate root-cause rework at low risk.`);
+      }
+
+      if (window.courseraApi) {
+        try {
+          window.courseraApi.callMethod({
+            type: "SET_ANSWER",
+            data: { completed: true, score: Number((score / 100).toFixed(2)) }
+          });
+        } catch (e) {}
+      }
+    }
+
+    function showBanner(pass, html) {
+      const el = document.getElementById("auditBanner");
+      el.className = "audit-banner show " + (pass ? "audit-pass" : "audit-warn");
+      el.innerHTML = html;
+      resizeFrame();
+    }
+
+    function resizeFrame() {
+      if (window.courseraApi) {
+        try {
+          window.courseraApi.callMethod({
+            type: "SET_HEIGHT",
+            data: { height: document.getElementById("app").offsetHeight + 36 }
+          });
+        } catch (e) {}
+      }
+    }
+
+    window.addEventListener("load", () => {
+      resizeFrame();
+      if (window.courseraApi) {
+        try {
+          window.courseraApi.callMethod({
+            type: "GET_SESSION_CONFIGURATION",
+            onSuccess: resizeFrame,
+            onError: resizeFrame
+          });
+        } catch (e) {}
+      }
+    });
+  </script>
+</body>
+</html>
